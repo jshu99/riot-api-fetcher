@@ -54,7 +54,7 @@ def save_match_data(match):
 def extract_player_stats(match_json):
     fields = [
         #player_info
-        "riotIdGameName", "championName", "teamPosition", "win",
+        "riotIdGameName", "championName", "teamPosition", "win", 'gameEndedInEarlySurrender', 'gameEndedInSurrender',
         "kills", "deaths", "assists", "soloKills", "firstBloodKill", "consumablesPurchased",
         "damageDealtToObjectives", "damageSelfMitigated", "totalDamageTaken",
         "totalDamageDealtToChampions", "champExperience", "goldEarned", "goldSpent",
@@ -71,8 +71,9 @@ def extract_player_stats(match_json):
         "summoner1Id", "summoner1Casts", "summoner2Id", "summoner2Casts",
 
         #player communication
-        "allInPings", "assistMePings", "commandPings", "enemyMissingPings", "enemyVisionPings",
+        "basicPings", "allInPings", "assistMePings", "commandPings", "enemyMissingPings", "enemyVisionPings",
         "holdPings", "getBackPings", "needVisionPings", "onMyWayPings", "pushPings", "visionClearedPings",
+        
 
         #objectives
         "objectivesStolen", "firstTowerKill", "firstTowerAssist", "turretKills", "turretTakedowns"
@@ -105,6 +106,8 @@ def extract_player_stats(match_json):
             "matchId": match_json["metadata"]["matchId"],
             "teamId": player["teamId"],
             "gameDuration": match_json["info"]["gameDuration"],
+            "gameEndedInEarlySurrender": match_json["info"].get("gameEndedInEarlySurrender", None),
+            "gameEndedInSurrender": match_json["info"].get("gameEndedInSurrender", None),
             "participantId": player["participantId"],
             **{field: player.get(field, None) for field in fields},
             # Apply team-level stats to all players on the team
@@ -133,6 +136,11 @@ def extract_player_stats(match_json):
             "maxLevelLeadLaneOpponent": player.get("challenges", {}).get("maxLevelLeadLaneOpponent", None),
             "maxCsAdvantageOnLaneOpponent": player.get("challenges", {}).get("maxCsAdvantageOnLaneOpponent", None),
             "maxKillDeficit": player.get("challenges", {}).get("maxKillDeficit", None),
+            "fistBumpParticipation": player.get("challenges", {}).get("fistBumpParticipation", None),
+            "teamElderDragonKills": player.get("challenges", {}).get("teamElderDragonKills", None),
+            "abilityUses": player.get("challenges", {}).get("abilityUses", None),
+            "hadOpenNexus": player.get("challenges", {}).get("hadOpenNexus", None),
+            "wardTakedownsBefore20M": player.get("challenges", {}).get("wardTakedownsBefore20M", None),
         }
         for player in match_json["info"]["participants"]
     ]
@@ -144,25 +152,21 @@ def save_player_stats_csv(player_stats, filename="player_stats.csv"):
     
     # Define the fields we want in the CSV
     fields = [
-        "matchId", "teamId", "gameDuration", "participantId", "riotIdGameName", "championName", "teamPosition", "win",
-        "kills", "deaths", "assists", "soloKills", "firstBloodKill", "consumablesPurchased",
-        "damageDealtToObjectives", "damageSelfMitigated", "totalDamageTaken",
-        "totalDamageDealtToChampions", "champExperience", "goldEarned", "goldSpent",
-        "visionScore", "sightWardsBoughtInGame", "wardsPlaced", "wardsKilled", "detectorWardsPlaced",
-        "neutralMinionsKilled", "totalMinionsKilled", "totalAllyJungleMinionsKilled", "totalEnemyJungleMinionsKilled",
-        "spell1Casts", "spell2Casts", "spell3Casts", "spell4Casts",
+        "matchId", "gameDuration", "gameEndedInEarlySurrender", "gameEndedInSurrender", "teamId","win", "championKills", "participantId", 
+        "riotIdGameName", "championName", "teamPosition", "champExperience", "kills", "deaths", "assists", "soloKills", 
+        "firstBloodKill", "consumablesPurchased", "damageDealtToObjectives", "damageSelfMitigated", "totalDamageTaken",
+        "firstTowerKill", "firstTowerAssist", "turretKills", "turretTakedowns", "turretPlatesTaken", "firstTurretKilledTime",
+        "totalDamageDealtToChampions", "damagePerMinute", "goldEarned", "goldSpent",
+        "visionScore", "sightWardsBoughtInGame", "wardsPlaced","stealthWardsPlaced", "wardsKilled", "detectorWardsPlaced", 
+        "visionScorePerMinute", "wardTakedownsBefore20M", "visionScoreAdvantageLaneOpponent",
+        "neutralMinionsKilled", "totalMinionsKilled", "totalAllyJungleMinionsKilled", "totalEnemyJungleMinionsKilled", 
+        "laneMinionsFirst10Minutes", "jungleCsBefore10Minutes", "maxLevelLeadLaneOpponent", "maxCsAdvantageOnLaneOpponent",
+        "spell1Casts", "spell2Casts", "spell3Casts", "spell4Casts", "abilityUses", "summoner1Id", "summoner1Casts", "summoner2Id", "summoner2Casts", 
         "item0", "item1", "item2", "item3", "item4", "item5", "item6", "itemsPurchased",
-        "summoner1Id", "summoner1Casts", "summoner2Id", "summoner2Casts",
-        "allInPings", "assistMePings", "commandPings", "enemyMissingPings", "enemyVisionPings",
-        "holdPings", "getBackPings", "needVisionPings", "onMyWayPings", "pushPings", "visionClearedPings",
-        "objectivesStolen", "firstTowerKill", "firstTowerAssist", "turretKills", "turretTakedowns",
-        "baronFirst", "baronKills", "dragonFirst", "dragonKills", "inhibitorFirst", "inhibitorKills",
-        "riftHeraldKills", "championKills", "atakhanFirst", "atakhanKills",
-        "epicMonsterKill", "firstBlood", "firstTurret",
-        "damagePerMinute", "visionScoreAdvantageLaneOpponent", "visionScorePerMinute", "stealthWardsPlaced",
-        "laneMinionsFirst10Minutes", "jungleCsBefore10Minutes",
-        "firstTurretKilledTime", "turretPlatesTaken",
-        "maxLevelLeadLaneOpponent", "maxCsAdvantageOnLaneOpponent", "maxKillDeficit"
+        "basicPings", "allInPings", "assistMePings", "commandPings", "enemyMissingPings", "enemyVisionPings",
+        "holdPings", "getBackPings", "needVisionPings", "onMyWayPings", "pushPings", "visionClearedPings", "fistBumpParticipation",
+        "objectivesStolen", "baronFirst", "inhibitorFirst","dragonFirst", "baronKills", "inhibitorKills", "dragonKills",
+        "riftHeraldKills", "atakhanKills", "epicMonsterKill", "firstBlood", "firstTurret", "maxKillDeficit", "teamElderDragonKills","hadOpenNexus"
     ]
     
     # Check if file exists to determine if we need to write header
@@ -183,50 +187,59 @@ def main_loop():
     processed = load_processed_matches()
     print("Starting data collection with conservative rate limiting...")
     
-    try:
-        entries = get_master_entries()
-        print(f"Fetched {len(entries)} players")
+    while True:
+        try:
+            entries = get_master_entries()
+            print(f"Fetched {len(entries)} players")
 
-        # Process only the first player for testing
-        entry = entries[0]
-        print(f"Processing player: {entry.get('riotIdGameName', 'Unknown')}")
-        
-        puuid = get_puuid(entry["summonerId"])
-        if not puuid:
-            print(f"Could not get PUUID for {entry.get('riotIdGameName', 'Unknown')}")
-            return
-
-        match_ids = get_match_ids(puuid, count=1)  # Only get 1 match
-        for match_id in match_ids:
-            if match_id in processed:
-                print(f"Match {match_id} already processed, skipping...")
-                continue
-
-            try:
-                print(f"Fetching match {match_id}...")
-                match_data = get_match_data(match_id)
-                # save_match_data(match_data)  # Removed - no longer saving full JSON files
-
-                # Extract and save player stats to CSV
-                player_stats = extract_player_stats(match_data)
-                save_player_stats_csv(player_stats)
+            # Process first 20 players to avoid rate limits
+            for i, entry in enumerate(entries[:20]):
+                print(f"Processing player {i+1}/20: {entry.get('riotIdGameName', 'Unknown')}")
                 
-                # Print summary
-                print(f"Extracted stats for {len(player_stats)} players:")
-                for stat in player_stats:
-                    print(f"  {stat['riotIdGameName']}: {stat['championName']} - {stat['kills']}/{stat['deaths']}/{stat['assists']}")
+                puuid = get_puuid(entry["summonerId"])
+                if not puuid:
+                    print(f"Could not get PUUID for {entry.get('riotIdGameName', 'Unknown')}")
+                    continue
 
-                processed.add(match_id)
-                print("Test completed successfully!")
-                return  # Exit after one match
-                
-            except Exception as e:
-                print(f"Error fetching match {match_id}: {e}")
-                time.sleep(10)  # Longer delay on error
+                match_ids = get_match_ids(puuid, count=5)  # Get 5 matches per player
+                for match_id in match_ids:
+                    if match_id in processed:
+                        print(f"Match {match_id} already processed, skipping...")
+                        continue
 
-    except Exception as e:
-        print(f"Error in main loop: {e}")
-        time.sleep(30)
+                    try:
+                        print(f"Fetching match {match_id}...")
+                        match_data = get_match_data(match_id)
+                        # save_match_data(match_data)  # Removed - no longer saving full JSON files
+
+                        # Extract and save player stats to CSV
+                        player_stats = extract_player_stats(match_data)
+                        save_player_stats_csv(player_stats)
+                        
+                        # Print summary
+                        print(f"Extracted stats for {len(player_stats)} players:")
+                        for stat in player_stats:
+                            print(f"  {stat['riotIdGameName']}: {stat['championName']} - {stat['kills']}/{stat['deaths']}/{stat['assists']}")
+
+                        processed.add(match_id)
+                        time.sleep(REQUEST_DELAY)  # Rate limit between matches
+                        
+                    except Exception as e:
+                        print(f"Error fetching match {match_id}: {e}")
+                        time.sleep(10)  # Longer delay on error
+
+            save_processed_matches(processed)
+            print(f"Completed batch. Processed {len(processed)} total matches.")
+            print(f"Sleeping {BATCH_DELAY} seconds before next round...")
+            time.sleep(BATCH_DELAY)
+            
+        except KeyboardInterrupt:
+            print("\nStopping data collection...")
+            save_processed_matches(processed)
+            break
+        except Exception as e:
+            print(f"Error in main loop: {e}")
+            time.sleep(30)
 
 
 
