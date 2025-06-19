@@ -1,7 +1,16 @@
 import requests, time, json, csv
 from urllib.parse import quote
+from dotenv import load_dotenv
+import os
 
-API_KEY = "RGAPI-331685ef-bd1c-44a2-80b7-5a1848bef044"
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key from environment variable
+API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    raise ValueError("API key error.")
+
 HEADERS = {"X-Riot-Token": API_KEY}
 
 PLATFORM = "na1"
@@ -235,7 +244,7 @@ def save_player_stats_csv(player_stats, filename="player_stats_new.csv"):
 def main_loop():
     processed = load_processed_matches()
     player_ranges = load_player_match_ranges()
-    print("Starting data collection with optimized rate limiting...")
+    print("Starting data collection...")
     
     while True:
         try:
